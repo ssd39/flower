@@ -38,6 +38,8 @@ handlers = [
     (r"/api/worker/queue/add-consumer/(.+)", control.WorkerQueueAddConsumer),
     (r"/api/worker/queue/cancel-consumer/(.+)",
         control.WorkerQueueCancelConsumer),
+    (r"/api/worker/delete/(.+)",
+     control.DeleteWorker),
     # Task API
     (r"/api/tasks", tasks.ListTasks),
     (r"/api/task/types", tasks.ListTaskTypes),

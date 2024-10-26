@@ -51,6 +51,13 @@ class WorkersView(BaseHandler):
             info.update(status=worker.alive)
             workers[name] = info
 
+        for name in events.workers.copy():
+            worker = events.workers[name]
+            info = dict()
+            info.update(self._as_dict(worker))
+            info.update(status=worker.alive)
+            workers[name] = info
+
         if options.purge_offline_workers is not None:
             timestamp = int(time.time())
             offline_workers = []

@@ -411,6 +411,11 @@ Revoke a task
         terminate = self.get_argument('terminate', default=False, type=bool)
         signal = self.get_argument('signal', default='SIGTERM', type=str)
         self.capp.control.revoke(taskid, terminate=terminate, signal=signal)
+        self.send_custom_event(
+            'revoke-task', {
+                'uuid': taskid
+            }
+        )
         self.write(dict(message=f"Revoked '{taskid}'"))
 
 
@@ -529,3 +534,11 @@ Change rate limit for a task
             self.set_status(403)
             reason = self.error_reason(taskname, response)
             self.write(f"Failed to set rate limit: '{reason}'")
+
+
+class DeleteWorker(ControlHandler):
+    @web.authenticated
+    def get(self, workername):
+        logger.info(self.application.events.state.workers)
+        del self.application.events.state.workers[workername]
+        self.write(f"Worker deleted successfully!")

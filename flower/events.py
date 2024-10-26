@@ -1,17 +1,20 @@
 import collections
 import logging
-import shelve
 import threading
 import time
 from collections import Counter
 from functools import partial
+import redisshelve as shelve
+from redis import Redis
 
 from celery.events import EventReceiver
 from celery.events.state import State
+from celery import states
 from prometheus_client import Counter as PrometheusCounter
 from prometheus_client import Gauge, Histogram
 from tornado.ioloop import PeriodicCallback
 from tornado.options import options
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +112,10 @@ class EventsState(State):
         if event_type == 'worker-offline':
             self.metrics.worker_online.labels(worker_name).set(0)
 
+        if event_type == 'revoke-task':
+            task_id = event['uuid']
+            self.tasks[task_id].state = states.REVOKED
+
 
 class Events(threading.Thread):
     events_enable_interval = 5000
@@ -123,17 +130,18 @@ class Events(threading.Thread):
         self.io_loop = io_loop
         self.capp = capp
 
-        self.db = db
+        self.db = Redis(host=os.environ["REDIS_SERVER"], port=os.environ["REDIS_PORT"])
         self.persistent = persistent
         self.enable_events = enable_events
         self.state = None
         self.state_save_timer = None
 
         if self.persistent:
-            logger.debug("Loading state from '%s'...", self.db)
-            state = shelve.open(self.db)
+            logger.debug("Loading state from redis...")
+            state = shelve.open(redis=self.db, key_prefix="flower_")
             if state:
                 self.state = state['events']
+                logger.info(state['events'].workers)
             state.close()
 
             if state_save_interval:
@@ -195,8 +203,8 @@ class Events(threading.Thread):
                 time.sleep(try_interval)
 
     def save_state(self):
-        logger.debug("Saving state to '%s'...", self.db)
-        state = shelve.open(self.db, flag='n')
+        logger.debug("Saving state to redis...")
+        state = shelve.open(redis=self.db, key_prefix='flower_')
         state['events'] = self.state
         state.close()
 

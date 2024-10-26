@@ -114,6 +114,15 @@ class BaseHandler(tornado.web.RequestHandler):
     def capp(self):
         "return Celery application object"
         return self.application.capp
+    
+    def send_custom_event(self, event_type, event_data):
+        app = self.application.capp
+        with app.connection() as connection:
+            # Create an event dispatcher for the app
+            dispatcher = app.events.Dispatcher(connection)
+
+            # Send custom event with event_type and event_data
+            dispatcher.send(event_type, **event_data)
 
     def format_task(self, task):
         custom_format_task = self.application.options.format_task
