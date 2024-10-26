@@ -132,7 +132,7 @@ class Events(threading.Thread):
 
         self.db = Redis(host=os.environ["REDIS_SERVER"], port=os.environ["REDIS_PORT"])
         # as we are using aws elastic cache so removing this capability as its Redis OSS not support this command
-        del self.db["sync"]
+        self.db.sync = lambda *args, **kwargs: None
         self.persistent = persistent
         self.enable_events = enable_events
         self.state = None
@@ -208,6 +208,7 @@ class Events(threading.Thread):
         logger.debug("Saving state to redis...")
         state = shelve.open(redis=self.db, key_prefix='flower_')
         state['events'] = self.state
+        state.sync()
         state.close()
 
     def on_enable_events(self):
