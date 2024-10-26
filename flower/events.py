@@ -131,6 +131,8 @@ class Events(threading.Thread):
         self.capp = capp
 
         self.db = Redis(host=os.environ["REDIS_SERVER"], port=os.environ["REDIS_PORT"])
+        # as we are using aws elastic cache so removing this capability as its Redis OSS not support this command
+        del self.db["sync"]
         self.persistent = persistent
         self.enable_events = enable_events
         self.state = None
