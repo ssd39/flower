@@ -208,7 +208,6 @@ class Events(threading.Thread):
         logger.debug("Saving state to redis...")
         state = shelve.open(redis=self.db, key_prefix='flower_')
         state['events'] = self.state
-        state.sync()
         state.close()
 
     def on_enable_events(self):

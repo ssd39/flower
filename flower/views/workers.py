@@ -42,18 +42,19 @@ class WorkersView(BaseHandler):
                 logger.exception('Failed to update workers: %s', e)
 
         workers = {}
+
+        for name in events.workers.copy():
+            worker = events.workers[name]
+            info = dict()
+            info.update(self._as_dict(worker))
+            info.update(status=worker.alive)
+            workers[name] = info
+
         for name, values in events.counter.items():
             if name not in events.workers:
                 continue
             worker = events.workers[name]
             info = dict(values)
-            info.update(self._as_dict(worker))
-            info.update(status=worker.alive)
-            workers[name] = info
-
-        for name in events.workers.copy():
-            worker = events.workers[name]
-            info = dict()
             info.update(self._as_dict(worker))
             info.update(status=worker.alive)
             workers[name] = info
